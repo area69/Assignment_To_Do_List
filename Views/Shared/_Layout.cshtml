@@ -1,0 +1,45 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Assignment_To_Do_List</title>
+
+    <!-- External Libraries (Tailwind CSS, Axios, and XLSX for Excel functionality) -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+    <!-- Optional: Include Bootstrap CSS (commented out) -->
+    <!-- <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" /> -->
+    <!-- <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" /> -->
+</head>
+<body class="bg-gray-100 font-sans flex flex-col min-h-screen">
+
+    <!-- Header Section -->
+    <header class="bg-blue-600 text-white text-center py-4">
+        <h4>To Do List</h4>
+    </header>
+
+    <!-- Main Content Section -->
+    <main>
+        @RenderBody() <!-- This renders the view's content in the layout -->
+    </main>
+
+    <!-- Footer Section -->
+    <footer class="bg-gray-800 text-gray-300 py-6 mt-10">
+        <div class="container mx-auto flex flex-col items-center justify-center">
+            <p class="text-sm text-center">&copy; 2024 To-Do List App. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Files -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <!-- Render Additional Scripts Section if Exists (used in specific views) -->
+    @await RenderSectionAsync("Scripts", required: false)
+
+</body>
+</html>

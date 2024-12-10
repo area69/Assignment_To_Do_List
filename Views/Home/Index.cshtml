@@ -1,0 +1,221 @@
+﻿@{
+    ViewData["Title"] = "To-Do List Management"; // Set the page title dynamically
+}
+@model IEnumerable<Assignment_To_Do_List.Models.TaskModel> //This specifies that the model for the view is a list of TaskModel objects
+
+
+<!-- Container for the entire content, ensuring responsiveness with Tailwind CSS classes -->
+<div class="container mx-auto p-2">
+
+    <!-- Button to Add New Task -->
+    <button onclick="openModal('addTaskModal')" class="bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600 mb-4 w-full sm:w-auto">
+        Add New Task
+    </button>
+
+    <!-- Task Table -->
+    <div class="bg-white shadow-md rounded p-6">
+        <h2 class="text-xl font-bold mb-4">Task List</h2>
+
+        <!-- Scrollable Table Wrapper for small screen -->
+        <div class="overflow-x-auto">
+            <table class="w-full table-auto border-collapse border border-gray-200 text-center">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <!-- Table Header with multi-row and multi-column headers -->
+                        <th rowspan="2" class="border border-gray-300 px-4 py-2">ID</th>
+                        <th rowspan="2" class="border border-gray-300 px-4 py-2">Title</th>
+                        <th rowspan="2" class="border border-gray-300 px-4 py-2">Assigned To</th>
+                        <th colspan="2" class="border border-gray-300 px-4 py-2">Time Frame</th>
+                        <th rowspan="2" class="border border-gray-300 px-4 py-2">Details</th>
+                        <th rowspan="2" class="border border-gray-300 px-4 py-2">Status</th>
+                        <th rowspan="2" class="border border-gray-300 px-4 py-2">Actions</th>
+                    </tr>
+                    <tr>
+                        <!-- Sub-header for Time Frame -->
+                        <th>FROM</th>
+                        <th>TO</th>
+                    </tr>
+                </thead>
+
+                <!-- Table Body -->
+                <tbody>
+                    <!-- Iterating over each task from the model (list of tasks) -->
+                    @foreach (var task in Model)
+                    {
+                        <tr>
+                            <!-- Task Data in Each Row -->
+                            <td class="border border-gray-300 px-4 py-2">@task.Id</td>
+                            <td class="border border-gray-300 px-4 py-2">@task.Title</td>
+                            <td class="border border-gray-300 px-4 py-2">@task.AssignedTo</td>
+                            <!-- Conditionally display dates (formatted) or "N/A" if not available -->
+                            <td class="border border-gray-300 px-4 py-2">@(task.DateStarted.HasValue ? task.DateStarted.Value.ToString("MMMM d, yyyy") : "N/A")</td>
+                            <td class="border border-gray-300 px-4 py-2">@(task.DateOfCompletion.HasValue ? task.DateOfCompletion.Value.ToString("MMMM d, yyyy") : "N/A")</td>
+                            <td class="border border-gray-300 px-4 py-2">@task.Details</td>
+
+                            <!-- Status Column with Conditional Formatting -->
+                            <td class="border border-gray-300 px-4 py-2 font-black
+                            @(task.Status == "Pending" ? "text-red-500" : task.Status == "In Progress" ? "text-blue-500" : task.Status == "Completed" ? "text-green-500" : "")">
+                                @task.Status
+                            </td>
+
+                            <!-- Action Buttons for Editing and Deleting Tasks -->
+                            <td class="border border-gray-300 px-4 py-2 space-x-2 flex justify-center">
+                                <!-- Edit Button, triggers modal opening with task details -->
+                                <button onclick="openEditModal(@task.Id, '@task.Title', '@task.AssignedTo', '@task.Details', ' @(task.DateStarted.HasValue ? task.DateStarted.Value.ToString("yyyy-MM-dd") : "N/A")', ' @(task.DateOfCompletion.HasValue ? task.DateOfCompletion.Value.ToString("yyyy-MM-dd") : "N/A")','@task.Status')" class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
+                                    Edit
+                                </button>
+
+                                <!-- Delete Button -->
+                                <a class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600" asp-action="Delete" asp-route-id="@task.Id">Delete</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Export/Import Section -->
+    <div class="flex flex-col sm:flex-row justify-between mt-4 gap-4">
+        <!-- Export Button -->
+        <form asp-action="ExportToExcel" method="get" class="w-full sm:w-auto">
+            <button type="submit" class="bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600 w-full sm:w-auto">
+                Export Tasks to Excel
+            </button>
+        </form>
+
+        <!-- Import Button -->
+        <form asp-action="ImportFromExcel" enctype="multipart/form-data" class="w-full sm:w-auto flex items-center justify-start sm:justify-end" id="importForm">
+            <input id="fileInput" type="file" name="file" class="border border-gray-300 rounded px-6 py-2 w-full sm:w-auto" accept=".xlsx, .xls" />
+            <button type="submit" class="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 ml-0 sm:ml-2 w-full sm:w-auto">
+                Import Tasks from Excel
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Add Task Modal -->
+<div id="addTaskModal" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center hidden">
+    <div class="bg-white rounded-lg p-6 w-full sm:w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/4 max-w-md">
+        <h2 class="text-lg font-semibold mb-4">Add New Task</h2>
+        <form asp-action="AddTask" method="post">
+            <div class="mb-4">
+                <label for="taskTitle" class="block text-gray-600">Task Title</label>
+                <input type="text" name="Title" id="taskTitle" required class="w-full border border-gray-300 rounded px-4 py-2">
+            </div>
+            <div class="mb-4">
+                <label for="assignedTo" class="block text-gray-600">Assigned To</label>
+                <input type="text" name="AssignedTo" id="assignedTo" required class="w-full border border-gray-300 rounded px-4 py-2">
+            </div>
+            <div class="mb-4">
+                <label for="details" class="block text-gray-600">Details</label>
+                <textarea name="Details" id="details" rows="3" required class="w-full border border-gray-300 rounded px-4 py-2"></textarea>
+            </div>
+            <div class="flex space-x-4">
+                <div class="mb-4 flex-1">
+                    <label for="DateStarted" class="block text-gray-600">Date Started</label>
+                    <input type="date" name="DateStarted" class="w-full border border-gray-300 rounded px-6 py-2" required>
+                </div>
+                <div class="mb-4 flex-1">
+                    <label for="DateOfCompletion" class="block text-gray-600">Date Of Completion</label>
+                    <input type="date" name="DateOfCompletion" class="w-full border border-gray-300 rounded px-6 py-2" required>
+                </div>
+            </div>
+            <div class="mb-4">
+                <label for="Status" class="block text-gray-600">Status</label>
+                <select name="Status" class="w-full border border-gray-300 rounded px-4 py-2">
+                    <option value="Pending">Pending</option>
+                    <option value="Completed">Completed</option>
+                    <option value="In Progress">In Progress</option>
+                </select>
+            </div>
+            <div class="flex space-x-4">
+                <button type="submit" class="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 flex-1">Save Task</button>
+                <button onclick="closeModal('addTaskModal')" class="bg-gray-500 text-white px-6 py-2 rounded hover:bg-gray-600 flex-1">Close</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Task Modal -->
+<div id="editTaskModal" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center hidden">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-full sm:w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/4 max-w-md">
+        <h2 class="text-lg font-semibold mb-4">Edit Task</h2>
+        <form asp-action="EditTask" method="post">
+            <input type="hidden" name="editId" id="editId" /> <!-- Hidden ID to send task ID -->
+            <div class="mb-4">
+                <label for="editTitle" class="block text-gray-600 font-semibold mb-2">Task Title</label>
+                <input type="text" name="Title" id="editTitle" class="w-full border border-gray-300 rounded px-4 py-2 focus:ring-2 focus:ring-blue-500" required />
+            </div>
+
+            <div class="mb-4">
+                <label for="editassignedTo" class="block text-gray-600 font-semibold mb-2">Assigned To</label>
+                <input type="text" name="AssignedTo" id="editassignedTo" class="w-full border border-gray-300 rounded px-4 py-2 focus:ring-2 focus:ring-blue-500" required />
+            </div>
+
+            <div class="mb-4">
+                <label for="editDetails" class="block text-gray-600 font-semibold mb-2">Task Details</label>
+                <textarea name="Details" id="editDetails" rows="3" class="w-full border border-gray-300 rounded px-4 py-2 focus:ring-2 focus:ring-blue-500" required></textarea>
+            </div>
+
+            <div class="flex space-x-4">
+                <div class="mb-4 flex-1">
+                    <label for="editDateStarted" class="block text-gray-600">Date Started</label>
+                    <input type="date" name="DateStarted" id="editDateStarted" class="w-full border border-gray-300 rounded px-6 py-2" required>
+                </div>
+                <div class="mb-4 flex-1">
+                    <label for="editDateOfCompletion" class="block text-gray-600">Date Of Completion</label>
+                    <input type="date" name="DateOfCompletion" id="editDateOfCompletion" class="w-full border border-gray-300 rounded px-6 py-2" required>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label for="editStatus" class="block text-gray-600 font-semibold mb-2">Task Status</label>
+                <select name="Status" id="editStatus" class="w-full border border-gray-300 rounded px-4 py-2 focus:ring-2 focus:ring-blue-500" required>
+                    <option value="Pending">Pending</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Completed">Completed</option>
+                </select>
+            </div>
+
+            <div class="flex space-x-4 mt-4">
+                <button type="submit" class="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 w-full sm:w-auto flex-1">
+                    Save Changes
+                </button>
+                <button type="button" onclick="closeEditModal()" class="bg-gray-500 text-white px-6 py-2 rounded hover:bg-gray-600 w-full sm:w-auto flex-1">
+                    Close
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Scripts for Opening/Closing -->
+<script>
+    // Function to open modal by removing the hidden class
+    function openModal(modalId) {
+        document.getElementById(modalId).classList.remove('hidden');
+    }
+
+    // Function to close modal by adding the hidden class
+    function closeModal(modalId) {
+        document.getElementById(modalId).classList.add('hidden');
+    }
+
+    // Function to populate edit modal with task data
+    function openEditModal(id, title, assignedTo, details, dateStarted, dateOfCompletion, status) {
+        document.getElementById("editId").value = id;
+        document.getElementById("editTitle").value = title;
+        document.getElementById("editassignedTo").value = assignedTo;
+        document.getElementById("editDetails").value = details;
+        document.getElementById("editDateStarted").value = new Date(dateStarted).toISOString().split('T')[0];
+        document.getElementById("editDateOfCompletion").value = new Date(dateOfCompletion).toISOString().split('T')[0];
+        document.getElementById("editStatus").value = status;
+        document.getElementById("editTaskModal").classList.remove("hidden");
+    }
+
+    // Function to close the edit modal
+    function closeEditModal() {
+        document.getElementById("editTaskModal").classList.add("hidden");
+    }
+</script>
